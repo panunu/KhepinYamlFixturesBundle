@@ -1,0 +1,7 @@
+model: Khepin\Fixture\Entity\Engine
+fixtures:
+  bmw_n57:
+    ():
+      serialNumber: 12341234
+      builtOn: "2013-03-17"
+

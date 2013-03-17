@@ -11,37 +11,84 @@ class OrmYamlFixture extends AbstractFixture
         $mapping = array_keys($metadata->fieldMappings);
         $associations = array_keys($metadata->associationMappings);
 
-        $object = new $class;
+        $object = $this->instantiate($class, $data, $metadata, $mapping, $associations);
+
+        unset($data['()']);
+
         foreach ($data as $field => $value) {
-            // Add the fields defined in the fistures file
+            // Add the fields defined in the fixtures file
+            $value = $this->determineValue(
+                $value, $field, $metadata, $mapping, $associations
+            );
+
             $method = Inflector::camelize('set_' . $field);
-            //
-            if (in_array($field, $mapping)) {
-                // Dates need to be converted to DateTime objects
-                $type = $metadata->fieldMappings[$field]['type'];
-                if ($type == 'datetime' OR $type == 'date') {
-                    $value = new \DateTime($value);
-                }
-                $object->$method($value);
-            } elseif (in_array($field, $associations)) { // This field is an association
-                if (is_array($value)) { // The field is an array of associations
-                    $referenceArray = array();
-                    foreach ($value as $referenceObject) {
-                        $referenceArray[] = $this->loader->getReference($referenceObject);
-                    }
-                    $object->$method($referenceArray);
-                } else {
-                    $object->$method($this->loader->getReference($value));
-                }
-            } else {
-                // It's a method call that will set a field named differently
-                // eg: FOSUserBundle ->setPlainPassword sets the password after
-                // Encrypting it
-                $object->$method($value);
-            }
+            $object->$method($value);
         }
+
         $this->runServiceCalls($object);
 
         return $object;
+    }
+
+    /**
+     * @param  string $class
+     * @param  array  $data
+     * @param  array  $metadata
+     * @param  array  $mapping
+     * @param  array  $associations
+     * @return mixed
+     */
+    private function instantiate($class, $data, $metadata, $mapping, $associations)
+    {
+        if (isset($data['()'])) {
+            $reflection = new \ReflectionClass($class);
+
+            $arguments = array();
+            foreach ($data['()'] as $field => $value) {
+                $arguments[] = $this->determineValue(
+                    $value, $field, $metadata, $mapping, $associations
+                );
+            }
+
+            return $reflection->newInstanceArgs($arguments);
+        }
+
+        return new $class;
+    }
+
+    /**
+     * @param  string $value
+     * @param  string $field
+     * @param  array  $metadata
+     * @param  array  $mapping
+     * @param  array  $associations
+     * @return mixed
+     */
+    private function determineValue($value, $field, $metadata, $mapping, $associations)
+    {
+        if (in_array($field, $mapping)) {
+            // Dates need to be converted to DateTime objects
+            $type = $metadata->fieldMappings[$field]['type'];
+            if ($type == 'datetime' OR $type == 'date') {
+                $value = new \DateTime($value);
+            }
+
+            return $value;
+        }
+
+        if (in_array($field, $associations)) { // This field is an association
+            if (is_array($value)) { // The field is an array of associations
+                $referenceArray = array();
+                foreach ($value as $referenceObject) {
+                    $referenceArray[] = $this->loader->getReference($referenceObject);
+                }
+
+                return $referenceArray;
+            }
+
+            return $this->loader->getReference($value);
+        }
+
+        return $value;
     }
 }

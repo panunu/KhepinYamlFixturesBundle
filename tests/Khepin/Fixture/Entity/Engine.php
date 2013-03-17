@@ -22,11 +22,18 @@ class Engine
     private $serialNumber;
 
     /**
-     * @param string $serialNumber
+     * @ORM\Column(type="datetime")
      */
-    public function __construct($serialNumber)
+    private $builtOn;
+
+    /**
+     * @param string    $serialNumber
+     * @param \DateTime $builtOn
+     */
+    public function __construct($serialNumber, \DateTime $builtOn)
     {
         $this->serialNumber = $serialNumber;
+        $this->builtOn      = $builtOn;
     }
 
     /**
@@ -43,5 +50,13 @@ class Engine
     public function getSerialNumber()
     {
         return $this->serialNumber;
+    }
+
+    /**
+     * @return \DateTime
+     */
+    public function getBuiltOn()
+    {
+        return $this->builtOn;
     }
 }

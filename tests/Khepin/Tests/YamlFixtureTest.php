@@ -166,6 +166,9 @@ class YamlFixtureTest extends BaseTestCaseOrm
         $this->assertEquals('BMW', $car2->getName());
     }
 
+    /**
+     * @group current
+     */
     public function testConstructorParameters()
     {
         $loader = new YamlLoader($this->kernel, array('SomeBundle/engines'), 'DataFixtures');
