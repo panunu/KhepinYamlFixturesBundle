@@ -165,4 +165,17 @@ class YamlFixtureTest extends BaseTestCaseOrm
         $this->assertEquals(get_class($car2), 'Khepin\Fixture\Entity\Car');
         $this->assertEquals('BMW', $car2->getName());
     }
+
+    public function testConstructorParameters()
+    {
+        $loader = new YamlLoader($this->kernel, array('SomeBundle/engines'), 'DataFixtures');
+        $loader->loadFixtures();
+
+        $engines = $this->doctrine
+            ->getManager()
+            ->getRepository('Khepin\Fixture\Entity\Engine')
+            ->findAll();
+
+        $this->assertEquals(1, count($engines));
+    }
 }
